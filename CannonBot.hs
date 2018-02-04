@@ -16,6 +16,9 @@ colNumToChar i = ['a'..'j']!!i
 numbers29 :: String
 numbers29 = ['2'..'9']
 
+ones :: [Char]
+ones = ['1','1'..]
+
 isPlayer :: Char -> Bool
 isPlayer c = elem c "wb"
 
@@ -35,7 +38,7 @@ charSum s = foldr (+) 0 (map digitToInt s)
 
 -- Replace chars with numerical >1 with list of numbers of equal sum
 convertToNumbers :: Char -> [Char]
-convertToNumbers c = if (elem c numbers29) then (take (digitToInt c) ['1','1'..]) else [c]
+convertToNumbers c = if (elem c numbers29) then (take (digitToInt c) ones) else [c]
 
 -- Join List of Strings into one String
 stringsToString :: [String] -> String
@@ -44,21 +47,22 @@ stringsToString (h:r) = h ++ stringsToString r
 
 -- LOGIC
 
--- Expand line with numbers >1 into line containing only 1s (1w3 -> 1w111)
-expandLine :: [Char] -> String
-expandLine s = stringsToString (map convertToNumbers s)
-
 -- Turn FEN String into list of strings (one per row)
 getRows :: String -> [String]
 getRows s = splitOn "/" s
-
---expandRows :: [String] -> [String]
---expandRows l = map ()
 
 -- Split list of row strings into list of list of strings (["ab","cd"] -> [["","a","b"]["","c","d"]])
 splitRows :: [String] -> [[String]]
 splitRows s = map (splitOn "") s
 
+-- Expand line with numbers >1 into line containing only 1s (1w3 -> 1w111 and "" -> 1..)
+expandLine :: [Char] -> String
+expandLine "" = take 10 ones
+expandLine s = stringsToString (map convertToNumbers s)
+
+-- Turn a FEN String into List of expanded rows
+getField :: String -> [String]
+getField s = map expandLine (getRows s)
 
 -- Input Format: 4W5/1w1w1w1w1w/1w1w1w1w1w/1w1w1w1w1w///b1b1b1b1b1/b1b1b1b1b1/b1b1b1b1b1/7B2 w
 -- Output Format: a0-b0
