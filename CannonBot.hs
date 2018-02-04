@@ -47,9 +47,6 @@ findAfter :: (Char -> Bool) -> String -> Int -> Int
 findAfter f (h:[]) n = if f h then n else -1
 findAfter f (h:r) n = if f h then n else (findAfter (f) r (n + 1))
 
-findFirstPlayer :: String -> Int
-findFirstPlayer s = (findAfter isPlayer s 0)
-
 -- Sum up numerical chars in list of chars
 charSum :: [Char] -> Int
 charSum s = foldr (+) 0 (map digitToInt s)
@@ -67,17 +64,15 @@ stringsToString (h:r) = h ++ stringsToString r
 findIndices :: String -> Char -> [Int]
 findIndices s c = snd (unzip (filter (\p -> (fst p) == c) (zip s [0..])))
 
+-- Offsets
 moveNextRowOffset :: [Int]
 moveNextRowOffset = [9..11]
 
 beatOffset :: [Int]
 beatOffset = [-1,0..1] ++ moveNextRowOffset
 
-targetFieldFree :: String -> Int -> Bool
-targetFieldFree s i = (fieldString s)!!i == '1'
-
-targetFieldOccupiedByEnemy :: String -> Int -> Char -> Bool
-targetFieldOccupiedByEnemy s i c = (fieldString s)!!i == (enemy c)
+retreatOffset :: [Int]
+retreatOffset = [-18,-20,-22]
 
 -- PARSE FIELD
 
@@ -125,13 +120,31 @@ enemyBase s = let fs = fieldString s in findIndices fs (toUpper (enemy (getPlaye
 
 -- RULES
 
+-- Target field free
+targetFieldFree :: String -> Int -> Bool
+targetFieldFree s i = (fieldString s)!!i == '1'
+
+-- Target field occupied by enemy
+targetFieldOccupiedByEnemy :: String -> Int -> Char -> Bool
+targetFieldOccupiedByEnemy s i c = (fieldString s)!!i == (enemy c)
+
+-- Player threated
+playerIsThreatened :: String -> Int -> Bool
+playerIsThreatened s i = let mf = (map (\f -> (i + f)) beatOffset) in (foldr (||) False (map (\f -> targetFieldOccupiedByEnemy s f (s!!i)) mf))
+
 -- Fields a player can move to by beating a potential enemy
 fieldsPlayerCanMoveToWithBeating :: String -> Int -> [(Int,Bool)]
 fieldsPlayerCanMoveToWithBeating s i = filter (\f -> snd f) (let mf = (map (\f -> (i + f)) beatOffset) in (zip mf (map (\f -> (targetFieldFree s f) || (targetFieldOccupiedByEnemy s f (s!!i))) mf)))
 
-fieldsPlayerCanMoveTo :: String -> Int -> [Int]
-fieldsPlayerCanMoveTo s i = fst (unzip (fieldsPlayerCanMoveToWithBeating s i))
+fieldsPlayerCanRetreatTo :: String -> Int -> [(Int, Bool)]
+fieldsPlayerCanRetreatTo s i = if (playerIsThreatened s i) then filter (\f -> snd f) (let mf = (map (+i) retreatOffset) in (zip mf (map (\f -> (targetFieldFree s f)) mf))) else []
 
+
+-- Wrapper for fieldsPlayerCanMoveToWithBeating
+fieldsPlayerCanMoveTo :: String -> Int -> [Int]
+fieldsPlayerCanMoveTo s i = fst (unzip ((fieldsPlayerCanMoveToWithBeating s i) ++ (fieldsPlayerCanRetreatTo s i)))
+
+-- List Moves a Player can make
 playerCanMakeMoves :: String -> Int -> [String]
 playerCanMakeMoves s i = map(\t -> (formatMove i t)) (fieldsPlayerCanMoveTo s i)
 
