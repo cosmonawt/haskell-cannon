@@ -134,11 +134,10 @@ playerIsThreatened s i = let mf = (map (\f -> (i + f)) beatOffset) in (foldr (||
 
 -- Fields a player can move to by beating a potential enemy
 fieldsPlayerCanMoveToWithBeating :: String -> Int -> [(Int,Bool)]
-fieldsPlayerCanMoveToWithBeating s i = filter (\f -> snd f) (let mf = (map (\f -> (i + f)) beatOffset) in (zip mf (map (\f -> (targetFieldFree s f) || (targetFieldOccupiedByEnemy s f (s!!i))) mf)))
+fieldsPlayerCanMoveToWithBeating s i = filter (\f -> snd f) (let mf = (map (+i) beatOffset) in (zip mf (map (\f -> (targetFieldFree s f) || (targetFieldOccupiedByEnemy s f (s!!i))) mf)))
 
 fieldsPlayerCanRetreatTo :: String -> Int -> [(Int, Bool)]
 fieldsPlayerCanRetreatTo s i = if (playerIsThreatened s i) then filter (\f -> snd f) (let mf = (map (+i) retreatOffset) in (zip mf (map (\f -> (targetFieldFree s f)) mf))) else []
-
 
 -- Wrapper for fieldsPlayerCanMoveToWithBeating
 fieldsPlayerCanMoveTo :: String -> Int -> [Int]
@@ -148,10 +147,13 @@ fieldsPlayerCanMoveTo s i = fst (unzip ((fieldsPlayerCanMoveToWithBeating s i) +
 playerCanMakeMoves :: String -> Int -> [String]
 playerCanMakeMoves s i = map(\t -> (formatMove i t)) (fieldsPlayerCanMoveTo s i)
 
+
+
 -- Input Format: 4W5/1w1w1w1w1w/1w1w1w1w1w/1w1w1w1w1w///b1b1b1b1b1/b1b1b1b1b1/b1b1b1b1b1/7B2 w
 -- Output Format: a0-b0
 getMove a = "a0-b0"
 
 -- Input Format: 4W5/1w1w1w1w1w/1w1w1w1w1w/1w1w1w1w1w///b1b1b1b1b1/b1b1b1b1b1/b1b1b1b1b1/7B2 w
 -- Output Format: [a0-b0,a0-b0]
-listMoves a = "[a0-b0,a0-b0]"
+--listMoves a = "[a0-b0,a0-b0]"
+listMoves s = stringsToString (map (\a -> (stringsToString (playerCanMakeMoves s a))) (allies s))
