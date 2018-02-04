@@ -25,6 +25,10 @@ isPlayer c = elem c "wb"
 isCity :: Char -> Bool
 isCity c = elem c "WB"
 
+enemy :: Char -> Char
+enemy 'w' = 'b'
+enemy 'b' = 'w'
+
 findAfter :: (Char -> Bool) -> String -> Int -> Int
 findAfter f (h:[]) n = if f h then n else -1
 findAfter f (h:r) n = if f h then n else (findAfter (f) r (n + 1))
@@ -45,7 +49,19 @@ stringsToString :: [String] -> String
 stringsToString ([]) = []
 stringsToString (h:r) = h ++ stringsToString r
 
--- LOGIC
+-- Find all indices of Char in String
+findIndices :: String -> Char -> [Int]
+findIndices s c = snd (unzip (filter (\p -> (fst p) == c) (zip s [0..])))
+
+-- PARSE FIELD
+
+-- Return whose turn it is
+getPlayerTurn :: String -> Char
+getPlayerTurn s = last s
+
+-- Cut players turn indicator from FEN
+getRowsOnly :: String -> String
+getRowsOnly s = head (splitOn " " s)
 
 -- Turn FEN String into list of strings (one per row)
 getRows :: String -> [String]
@@ -53,7 +69,7 @@ getRows s = splitOn "/" s
 
 -- Split list of row strings into list of list of strings (["ab","cd"] -> [["","a","b"]["","c","d"]])
 splitRows :: [String] -> [[String]]
-splitRows s = map (splitOn "") s
+splitRows ls = map (splitOn "") ls
 
 -- Expand line with numbers >1 into line containing only 1s (1w3 -> 1w111 and "" -> 1..)
 expandLine :: [Char] -> String
@@ -62,7 +78,17 @@ expandLine s = stringsToString (map convertToNumbers s)
 
 -- Turn a FEN String into List of expanded rows
 getField :: String -> [String]
-getField s = map expandLine (getRows s)
+getField s = map expandLine (getRows (getRowsOnly s))
+
+-- Converts FEN into completely expanded string without "/"
+fieldString :: String -> String
+fieldString s = stringsToString (getField s)
+
+allies :: String -> [Int]
+allies s = let fs = fieldString s in findIndices fs (getPlayerTurn s)
+
+enemies :: String -> [Int]
+enemies s = let fs = fieldString s in findIndices fs (enemy (getPlayerTurn s))
 
 -- Input Format: 4W5/1w1w1w1w1w/1w1w1w1w1w/1w1w1w1w1w///b1b1b1b1b1/b1b1b1b1b1/b1b1b1b1b1/7B2 w
 -- Output Format: a0-b0
