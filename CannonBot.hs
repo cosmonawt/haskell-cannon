@@ -14,10 +14,10 @@ nToC i = ['a'..'j']!!i
 
 -- Formatting positions
 iToP :: Int -> (Int,Int)
-iToP i = ((quot i 10), [9,8..0]!!(rem i 10))
+iToP i = ((rem i 10), (quot i 10))
 
 iToPc :: Int -> (Char,Int)
-iToPc i = ((nToC (quot i 10)), [9,8..0]!!(rem i 10))
+iToPc i = ((nToC ((rem i 10)), [9,8..0]!!(quot i 10)))
 
 pcToC :: (Char,Int) -> String
 pcToC (c,r) = [c] ++ [(intToDigit r)]
