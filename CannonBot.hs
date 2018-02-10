@@ -70,12 +70,13 @@ convertToNumbers c = if (elem c numbers29) then (take (digitToInt c) ones) else 
 
 -- Join List of Strings into one String
 stringsToString :: [String] -> String
-stringsToString ([]) = []
+stringsToString ([]) = ""
+stringsToString ("":r) = stringsToString r
 stringsToString (h:r) = h ++ stringsToString r
 
 -- Join List of Strings into one String
 stringsToListString :: [String] -> String
-stringsToListString ([]) = []
+stringsToListString ([]) = ""
 stringsToListString (h:r) = h ++ "," ++ (stringsToListString r)
 
 -- Find all indices of Char in String
@@ -232,11 +233,17 @@ playerIsPartOfHoriRightCannon :: String -> Int -> Bool
 playerIsPartOfHoriRightCannon s i = foldl (&&) True (map (\f -> (targetFieldOccupiedByAlly s (i-f) (s!!i))) horiCannonOffset)
 
 -- Player End of diagonal cannon
-playerIsPartOfDiagLeftCannon :: String -> Int -> Bool
-playerIsPartOfDiagLeftCannon s i = foldl (&&) True (map (\f -> (targetFieldOccupiedByAlly s (i+f) (s!!i))) diagLeftCannonOffset)
+playerIsPartOfDiagFLeftCannon :: String -> Int -> Bool
+playerIsPartOfDiagFLeftCannon s i = foldl (&&) True (map (\f -> (targetFieldOccupiedByAlly s (i+f) (s!!i))) diagLeftCannonOffset)
 
-playerIsPartOfDiagRightCannon :: String -> Int -> Bool
-playerIsPartOfDiagRightCannon s i = foldl (&&) True (map (\f -> (targetFieldOccupiedByAlly s (i+f) (s!!i))) diagRightCannonOffset)
+playerIsPartOfDiagFRightCannon :: String -> Int -> Bool
+playerIsPartOfDiagFRightCannon s i = foldl (&&) True (map (\f -> (targetFieldOccupiedByAlly s (i+f) (s!!i))) diagRightCannonOffset)
+
+playerIsPartOfDiagBLeftCannon :: String -> Int -> Bool
+playerIsPartOfDiagBLeftCannon s i = foldl (&&) True (map (\f -> (targetFieldOccupiedByAlly s (i-f) (s!!i))) diagRightCannonOffset)
+
+playerIsPartOfDiagBRightCannon :: String -> Int -> Bool
+playerIsPartOfDiagBRightCannon s i = foldl (&&) True (map (\f -> (targetFieldOccupiedByAlly s (i-f) (s!!i))) diagLeftCannonOffset)
 
 -- Moves
 
@@ -244,30 +251,31 @@ playerCannonMoves :: String -> Int -> [Int] -> [String]
 playerCannonMoves s i list = (map (\f -> (let x = i+f in (if (targetFieldOccupiedByEnemy s x (s!!i)) then (formatMove i x) else ""))) list)
 
 playerCannonVertFwdMoves :: String -> Int -> [String]
-playerCannonVertFwdMoves s i = playerCannonMoves s i [40,50]
+playerCannonVertFwdMoves s i = let x = i+30 in (if (playerIsPartOfVertFwdtCannon s i) && (targetFieldFree s x) then (formatMove i x) : playerCannonMoves s i [40,50] else [])
 
 playerCannonVertBwdMoves :: String -> Int -> [String]
-playerCannonVertBwdMoves s i = playerCannonMoves s i [-40,-50]
+playerCannonVertBwdMoves s i = let x = i-30 in (if (playerIsPartOfVertBwdtCannon s i) && (targetFieldFree s x) then (formatMove i x) : playerCannonMoves s i [-40,-50] else [])
 
 playerCannonHoriRightMoves :: String -> Int -> [String]
-playerCannonHoriRightMoves s i = playerCannonMoves s i [4,5]
+playerCannonHoriRightMoves s i = let x = i+3 in (if (playerIsPartOfHoriRightCannon s i) && (targetFieldFree s x) then (formatMove i x) : playerCannonMoves s i [4,5] else [])
 
 playerCannonHoriLeftMoves :: String -> Int -> [String]
-playerCannonHoriLeftMoves s i = playerCannonMoves s i [-4,-5]
+playerCannonHoriLeftMoves s i = let x = i-3 in (if (playerIsPartOfHoriLeftCannon s i) && (targetFieldFree s x) then (formatMove i x) : playerCannonMoves s i [-4,-5] else [])
 
 playerCannonDiagFRightMoves :: String -> Int -> [String]
-playerCannonDiagFRightMoves s i = playerCannonMoves s i [36,45]
+playerCannonDiagFRightMoves s i = let x = i+27 in (if (playerIsPartOfDiagFRightCannon s i) && (targetFieldFree s x) then (formatMove i x) : playerCannonMoves s i [36,45] else [])
 
 playerCannonDiagFLeftMoves :: String -> Int -> [String]
-playerCannonDiagFLeftMoves s i = playerCannonMoves s i [44,55]
+playerCannonDiagFLeftMoves s i = let x = i+33 in (if (playerIsPartOfDiagFLeftCannon s i) && (targetFieldFree s x) then (formatMove i x) : playerCannonMoves s i [44,55] else [])
 
 playerCannonDiagBRightMoves :: String -> Int -> [String]
-playerCannonDiagBRightMoves s i = playerCannonMoves s i [-36,-45]
+playerCannonDiagBRightMoves s i = let x = i-27 in (if (playerIsPartOfDiagBRightCannon s i) && (targetFieldFree s x) then (formatMove i x) : playerCannonMoves s i [-36,-45] else [])
 
 playerCannonDiagBLeftMoves :: String -> Int -> [String]
-playerCannonDiagBLeftMoves s i = playerCannonMoves s i [-44,-55]
+playerCannonDiagBLeftMoves s i = let x = i-33 in (if (playerIsPartOfDiagBLeftCannon s i) && (targetFieldFree s x) then (formatMove i x) : playerCannonMoves s i [-44,-55] else [])
 
-
+playerCannons :: String -> Int -> String
+playerCannons s i = stringsToString ((playerCannonVertFwdMoves s i) ++ (playerCannonVertBwdMoves s i) ++ (playerCannonHoriRightMoves s i) ++ (playerCannonHoriLeftMoves s i) ++ (playerCannonDiagFRightMoves s i) ++ (playerCannonDiagFLeftMoves s i) ++ (playerCannonDiagBRightMoves s i) ++ (playerCannonDiagBLeftMoves s i))
 
 -- --------------------------------------------------------
 -- Execute
@@ -275,7 +283,7 @@ playerCannonDiagBLeftMoves s i = playerCannonMoves s i [-44,-55]
 
 -- List Moves a Player can make
 playerCanMakeMoves :: String -> Int -> [String]
-playerCanMakeMoves s i = map(\t -> (formatMove i t)) (fieldsPlayerCanMoveTo (fieldString s) i)
+playerCanMakeMoves s i = (playerCannons s i) : (map(\t -> (formatMove i t)) (fieldsPlayerCanMoveTo (fieldString s) i))
 
 printMoves :: String -> [String]
 printMoves s = if (baseMissing s) then (setBase s) else (map (\a -> (stringsToString (playerCanMakeMoves s a))) (allies s))
