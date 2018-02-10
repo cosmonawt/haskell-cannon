@@ -90,7 +90,10 @@ beatOffset = [-1,1] ++ (moveNextRowOffset)
 
 retreatOffset :: [Int]
 retreatOffset = [-18,-20,-22]
---retreatOffset 'b' = [18, 20, 22]
+
+baseOffset :: Char -> [Int]
+baseOffset 'w' = [1..8]
+baseOffset 'b' = [91..98]
 
 -- PARSE FIELD
 
@@ -136,7 +139,14 @@ enemies s = let fs = fieldString s in findIndices fs (enemy (getPlayerTurn s))
 enemyBase :: String -> [Int]
 enemyBase s = let fs = fieldString s in findIndices fs (toUpper (enemy (getPlayerTurn s)))
 
--- RULES    
+-- base of current player is missing
+baseMissing :: String -> Bool
+baseMissing s = (length (homebase s)) == 0
+-- RULES
+
+-- Set Base
+setBase :: String -> [String]
+setBase s = map(\t -> (formatMove t t)) (baseOffset (getPlayerTurn s))
 
 -- Target field free
 targetFieldFree :: String -> Int -> Bool
@@ -182,7 +192,9 @@ playerCanMakeMoves :: String -> Int -> [String]
 playerCanMakeMoves s i = map(\t -> (formatMove i t)) (fieldsPlayerCanMoveTo (fieldString s) i)
 
 printMoves :: String -> [String]
-printMoves s = (map (\a -> (stringsToString (playerCanMakeMoves s a))) (allies s))
+printMoves s = if (baseMissing s) then (setBase s) else (map (\a -> (stringsToString (playerCanMakeMoves s a))) (allies s))
+
+
 
 
 -- Input Format: 4W5/1w1w1w1w1w/1w1w1w1w1w/1w1w1w1w1w///b1b1b1b1b1/b1b1b1b1b1/b1b1b1b1b1/7B2 w
