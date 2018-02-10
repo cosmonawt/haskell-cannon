@@ -6,7 +6,9 @@ import Util
 getMove :: String -> String
 listMoves :: String -> String
 
+-- --------------------------------------------------------
 -- UTILITIES
+-- --------------------------------------------------------
 
 -- Char representation of column number
 nToC :: Int -> Char
@@ -95,7 +97,24 @@ baseOffset :: Char -> [Int]
 baseOffset 'w' = [1..8]
 baseOffset 'b' = [91..98]
 
+vertFwdCannonOffset :: [Int]
+vertFwdCannonOffset = [10,20]
+
+vertBwdCannonOffset :: [Int]
+vertBwdCannonOffset = [-10,-20]
+
+horiCannonOffset :: [Int]
+horiCannonOffset = [1,2]
+
+diagRightCannonOffset :: [Int]
+diagRightCannonOffset = [9,18]
+
+diagLeftCannonOffset :: [Int]
+diagLeftCannonOffset = [11,22]
+
+-- --------------------------------------------------------
 -- PARSE FIELD
+-- --------------------------------------------------------
 
 -- Return whose turn it is
 getPlayerTurn :: String -> Char
@@ -142,7 +161,10 @@ enemyBase s = let fs = fieldString s in findIndices fs (toUpper (enemy (getPlaye
 -- base of current player is missing
 baseMissing :: String -> Bool
 baseMissing s = (length (homebase s)) == 0
+
+-- --------------------------------------------------------
 -- RULES
+-- --------------------------------------------------------
 
 -- Set Base
 setBase :: String -> [String]
@@ -159,6 +181,10 @@ pathNotOutOfBounds src dst = ((mod src 10) - (mod dst 10) `elem` [-1,0..1]) && (
 -- Target field occupied by enemy
 targetFieldOccupiedByEnemy :: String -> Int -> Char -> Bool
 targetFieldOccupiedByEnemy s i c = s!!i == (enemy c)
+
+-- Field occupied by ally
+targetFieldOccupiedByAlly :: String -> Int -> Char -> Bool
+targetFieldOccupiedByAlly s i c = s!!i == c
 
 -- Player threated
 playerIsThreatened :: String -> Int -> Bool
@@ -187,13 +213,72 @@ fieldsPlayerCanRetreatTo s i = if (playerIsThreatened s i)
 fieldsPlayerCanMoveTo :: String -> Int -> [Int]
 fieldsPlayerCanMoveTo s i = fst (unzip ((fieldsPlayerCanMoveToWithBeating s i) ++ (fieldsPlayerCanRetreatTo s i)))
 
+-- --------------------------------------------------------
+-- Cannons
+-- --------------------------------------------------------
+
+-- Player End of vertical cannon
+playerIsPartOfVertFwdtCannon :: String -> Int -> Bool
+playerIsPartOfVertFwdtCannon s i = foldl (&&) True (map (\f -> (targetFieldOccupiedByAlly s (i+f) (s!!i))) vertFwdCannonOffset)
+
+playerIsPartOfVertBwdtCannon :: String -> Int -> Bool
+playerIsPartOfVertBwdtCannon s i = foldl (&&) True (map (\f -> (targetFieldOccupiedByAlly s (i+f) (s!!i))) vertBwdCannonOffset)
+
+-- Player End of horizontal cannon
+playerIsPartOfHoriLeftCannon :: String -> Int -> Bool
+playerIsPartOfHoriLeftCannon s i = foldl (&&) True (map (\f -> (targetFieldOccupiedByAlly s (i+f) (s!!i))) horiCannonOffset)
+
+playerIsPartOfHoriRightCannon :: String -> Int -> Bool
+playerIsPartOfHoriRightCannon s i = foldl (&&) True (map (\f -> (targetFieldOccupiedByAlly s (i-f) (s!!i))) horiCannonOffset)
+
+-- Player End of diagonal cannon
+playerIsPartOfDiagLeftCannon :: String -> Int -> Bool
+playerIsPartOfDiagLeftCannon s i = foldl (&&) True (map (\f -> (targetFieldOccupiedByAlly s (i+f) (s!!i))) diagLeftCannonOffset)
+
+playerIsPartOfDiagRightCannon :: String -> Int -> Bool
+playerIsPartOfDiagRightCannon s i = foldl (&&) True (map (\f -> (targetFieldOccupiedByAlly s (i+f) (s!!i))) diagRightCannonOffset)
+
+-- Moves
+
+playerCannonMoves :: String -> Int -> [Int] -> [String]
+playerCannonMoves s i list = (map (\f -> (let x = i+f in (if (targetFieldOccupiedByEnemy s x (s!!i)) then (formatMove i x) else ""))) list)
+
+playerCannonVertFwdMoves :: String -> Int -> [String]
+playerCannonVertFwdMoves s i = playerCannonMoves s i [40,50]
+
+playerCannonVertBwdMoves :: String -> Int -> [String]
+playerCannonVertBwdMoves s i = playerCannonMoves s i [-40,-50]
+
+playerCannonHoriRightMoves :: String -> Int -> [String]
+playerCannonHoriRightMoves s i = playerCannonMoves s i [4,5]
+
+playerCannonHoriLeftMoves :: String -> Int -> [String]
+playerCannonHoriLeftMoves s i = playerCannonMoves s i [-4,-5]
+
+playerCannonDiagFRightMoves :: String -> Int -> [String]
+playerCannonDiagFRightMoves s i = playerCannonMoves s i [36,45]
+
+playerCannonDiagFLeftMoves :: String -> Int -> [String]
+playerCannonDiagFLeftMoves s i = playerCannonMoves s i [44,55]
+
+playerCannonDiagBRightMoves :: String -> Int -> [String]
+playerCannonDiagBRightMoves s i = playerCannonMoves s i [-36,-45]
+
+playerCannonDiagBLeftMoves :: String -> Int -> [String]
+playerCannonDiagBLeftMoves s i = playerCannonMoves s i [-44,-55]
+
+
+
+-- --------------------------------------------------------
+-- Execute
+-- --------------------------------------------------------
+
 -- List Moves a Player can make
 playerCanMakeMoves :: String -> Int -> [String]
 playerCanMakeMoves s i = map(\t -> (formatMove i t)) (fieldsPlayerCanMoveTo (fieldString s) i)
 
 printMoves :: String -> [String]
 printMoves s = if (baseMissing s) then (setBase s) else (map (\a -> (stringsToString (playerCanMakeMoves s a))) (allies s))
-
 
 
 
