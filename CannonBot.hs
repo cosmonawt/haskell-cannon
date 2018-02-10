@@ -248,34 +248,34 @@ playerIsPartOfDiagBRightCannon s i = foldl (&&) True (map (\f -> (targetFieldOcc
 -- Moves
 
 playerCannonMoves :: String -> Int -> [Int] -> [String]
-playerCannonMoves s i list = (map (\f -> (let x = i+f in (if (targetFieldOccupiedByEnemy s x (s!!i)) then (formatMove i x) else ""))) list)
+playerCannonMoves s i list = (map (\f -> (let x = i+f in (if (x > 0 && x < 100) && (targetFieldOccupiedByEnemy s x (s!!i)) then (formatMove i x) else ""))) list)
 
 playerCannonVertFwdMoves :: String -> Int -> [String]
-playerCannonVertFwdMoves s i = let x = i+30 in (if (playerIsPartOfVertFwdtCannon s i) && (targetFieldFree s x) then (formatMove i x) : playerCannonMoves s i [40,50] else [])
+playerCannonVertFwdMoves s i = let x = i+30 in (if (x > 0 && x < 100) && (playerIsPartOfVertFwdtCannon s i) && (targetFieldFree s x) then (formatMove i x) : playerCannonMoves s i [40,50] else [])
 
 playerCannonVertBwdMoves :: String -> Int -> [String]
-playerCannonVertBwdMoves s i = let x = i-30 in (if (playerIsPartOfVertBwdtCannon s i) && (targetFieldFree s x) then (formatMove i x) : playerCannonMoves s i [-40,-50] else [])
+playerCannonVertBwdMoves s i = let x = i-30 in (if (x > 0 && x < 100) && (playerIsPartOfVertBwdtCannon s i) && (targetFieldFree s x) then (formatMove i x) : playerCannonMoves s i [-40,-50] else [])
 
 playerCannonHoriRightMoves :: String -> Int -> [String]
-playerCannonHoriRightMoves s i = let x = i+3 in (if (playerIsPartOfHoriRightCannon s i) && (targetFieldFree s x) then (formatMove i x) : playerCannonMoves s i [4,5] else [])
+playerCannonHoriRightMoves s i = let x = i+3 in (if (x > 0 && x < 100) && (playerIsPartOfHoriRightCannon s i) && (targetFieldFree s x) then (formatMove i x) : playerCannonMoves s i [4,5] else [])
 
 playerCannonHoriLeftMoves :: String -> Int -> [String]
-playerCannonHoriLeftMoves s i = let x = i-3 in (if (playerIsPartOfHoriLeftCannon s i) && (targetFieldFree s x) then (formatMove i x) : playerCannonMoves s i [-4,-5] else [])
+playerCannonHoriLeftMoves s i = let x = i-3 in (if (x > 0 && x < 100) && (playerIsPartOfHoriLeftCannon s i) && (targetFieldFree s x) then (formatMove i x) : playerCannonMoves s i [-4,-5] else [])
 
 playerCannonDiagFRightMoves :: String -> Int -> [String]
-playerCannonDiagFRightMoves s i = let x = i+27 in (if (playerIsPartOfDiagFRightCannon s i) && (targetFieldFree s x) then (formatMove i x) : playerCannonMoves s i [36,45] else [])
+playerCannonDiagFRightMoves s i = let x = i+27 in (if (x > 0 && x < 100) && (playerIsPartOfDiagFRightCannon s i) && (targetFieldFree s x) then (formatMove i x) : playerCannonMoves s i [36,45] else [])
 
 playerCannonDiagFLeftMoves :: String -> Int -> [String]
-playerCannonDiagFLeftMoves s i = let x = i+33 in (if (playerIsPartOfDiagFLeftCannon s i) && (targetFieldFree s x) then (formatMove i x) : playerCannonMoves s i [44,55] else [])
+playerCannonDiagFLeftMoves s i = let x = i+33 in (if (x > 0 && x < 100) && (playerIsPartOfDiagFLeftCannon s i) && (targetFieldFree s x) then (formatMove i x) : playerCannonMoves s i [44,55] else [])
 
 playerCannonDiagBRightMoves :: String -> Int -> [String]
-playerCannonDiagBRightMoves s i = let x = i-27 in (if (playerIsPartOfDiagBRightCannon s i) && (targetFieldFree s x) then (formatMove i x) : playerCannonMoves s i [-36,-45] else [])
+playerCannonDiagBRightMoves s i = let x = i-27 in (if (x > 0 && x < 100) && (playerIsPartOfDiagBRightCannon s i) && (targetFieldFree s x) then (formatMove i x) : playerCannonMoves s i [-36,-45] else [])
 
 playerCannonDiagBLeftMoves :: String -> Int -> [String]
-playerCannonDiagBLeftMoves s i = let x = i-33 in (if (playerIsPartOfDiagBLeftCannon s i) && (targetFieldFree s x) then (formatMove i x) : playerCannonMoves s i [-44,-55] else [])
+playerCannonDiagBLeftMoves s i = let x = i-33 in (if (x > 0 && x < 100) && (playerIsPartOfDiagBLeftCannon s i) && (targetFieldFree s x) then (formatMove i x) : playerCannonMoves s i [-44,-55] else [])
 
 playerCannons :: String -> Int -> String
-playerCannons s i = stringsToString ((playerCannonVertFwdMoves s i) ++ (playerCannonVertBwdMoves s i) ++ (playerCannonHoriRightMoves s i) ++ (playerCannonHoriLeftMoves s i) ++ (playerCannonDiagFRightMoves s i) ++ (playerCannonDiagFLeftMoves s i) ++ (playerCannonDiagBRightMoves s i) ++ (playerCannonDiagBLeftMoves s i))
+playerCannons s i = let fs = (fieldString s) in stringsToString ((playerCannonVertFwdMoves fs i) ++ (playerCannonVertBwdMoves fs i) ++ (playerCannonHoriRightMoves fs i) ++ (playerCannonHoriLeftMoves fs i) ++ (playerCannonDiagFRightMoves fs i) ++ (playerCannonDiagFLeftMoves fs i) ++ (playerCannonDiagBRightMoves fs i) ++ (playerCannonDiagBLeftMoves fs i))
 
 -- --------------------------------------------------------
 -- Execute
