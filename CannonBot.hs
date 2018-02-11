@@ -27,8 +27,8 @@ pcToC :: (Char,Int) -> String
 pcToC (c,r) = [c] ++ [(intToDigit r)]
 
 -- format move to string src-dst
-formatMove :: Int -> Int -> String
-formatMove c t = pcToC(iToPc c) ++ "-" ++ pcToC(iToPc t)
+formatOneMove :: Int -> Int -> String
+formatOneMove c t = pcToC(iToPc c) ++ "-" ++ pcToC(iToPc t)
 
 -- row of position
 pToR :: Int -> Int
@@ -178,7 +178,7 @@ baseMissing s = (length (homebase s)) == 0
 
 -- Set Base
 setBase :: String -> [String]
-setBase s = map(\t -> (formatMove t t)) (baseOffset (getPlayerTurn s))
+setBase s = map(\t -> (formatOneMove t t)) (baseOffset (getPlayerTurn s))
 
 -- Target field free
 targetFieldFree :: String -> Int -> Bool
@@ -186,10 +186,10 @@ targetFieldFree s i = (fieldString s)!!i == '1'
 
 -- Path does not cross field borders
 pathNotOutOfBounds :: Int -> Int -> Bool
-pathNotOutOfBounds src dst = ((mod src 10) - (mod dst 10) `elem` [-1,0..1]) && (elem dst [0..99])
+pathNotOutOfBounds src dst = (elem dst [0..99]) && ((mod src 10) - (mod dst 10) `elem` [-1,0..1])
 
 cannonNotOOB :: Int -> Int -> Bool
-cannonNotOOB src dst = ((mod src 10) - (mod dst 10) `elem` [-4,-3..4]) && (elem dst [0..99])
+cannonNotOOB src dst = (elem dst [0..99]) && ((mod src 10) - (mod dst 10) `elem` [-4,-3..4])
 
 -- Target field occupied by enemy
 targetFieldOccupiedByEnemy :: String -> Int -> Char -> Bool
@@ -201,7 +201,7 @@ targetFieldOccupiedByAlly s i c = s!!i == c
 
 -- Player threated
 playerIsThreatened :: String -> Int -> Bool
-playerIsThreatened s i = let mf = (map (\f -> (i + f)) beatOffset) 
+playerIsThreatened s i = let mf = (map (\f -> ((playerMovement (s!!i) i) f)) beatOffset) 
     in (foldr (||) False (map (\f -> targetFieldOccupiedByEnemy s f (s!!i)) mf))
 
 -- Fields a player can move to by beating a potential enemy
@@ -261,54 +261,54 @@ playerIsPartOfDiagBRightCannon s i = foldl (&&) True (map (\f -> (targetFieldOcc
 
 playerCannonMoves :: String -> Int -> [Int] -> [String]
 playerCannonMoves s i list = (map (\f -> (let x = (playerMovement (s!!i) i) f in 
-    (if ((x >= 0 && x < 100) && (targetFieldOccupiedByEnemy s x (s!!i))) then (formatMove i x) else ""))) list)
+    (if ((x >= 0 && x < 100) && (targetFieldOccupiedByEnemy s x (s!!i))) then (formatOneMove i x) else ""))) list)
 
 playerCannonVertFwdMoves :: String -> Int -> [String]
 playerCannonVertFwdMoves s i = let x = (playerMovement (s!!i) i) 30 in 
-    (if (x >= 0 && x < 100) && (playerIsPartOfVertFwdtCannon s i) && (targetFieldFree s x) && (cannonNotOOB i x)
-        then (formatMove i x) : playerCannonMoves s i [40,50] 
+    (if (cannonNotOOB i x) && (playerIsPartOfVertFwdtCannon s i) && (targetFieldFree s x)
+        then (formatOneMove i x) : playerCannonMoves s i [40,50] 
         else [])
 
 playerCannonVertBwdMoves :: String -> Int -> [String]
 playerCannonVertBwdMoves s i = let x = (playerMovement (s!!i) i) (-30) in 
-    (if (x >= 0 && x < 100) && (playerIsPartOfVertBwdtCannon s i) && (targetFieldFree s x) && (cannonNotOOB i x)
-        then (formatMove i x) : playerCannonMoves s i [-40,-50] 
+    (if (cannonNotOOB i x) && (playerIsPartOfVertBwdtCannon s i) && (targetFieldFree s x)
+        then (formatOneMove i x) : playerCannonMoves s i [-40,-50] 
         else [])
 
 playerCannonHoriRightMoves :: String -> Int -> [String]
 playerCannonHoriRightMoves s i = let x = (playerMovement (s!!i) i) (-3) in 
-    (if (x >= 0 && x < 100) && (playerIsPartOfHoriRightCannon s i) && (targetFieldFree s x) && (cannonNotOOB i x)
-        then (formatMove i x) : playerCannonMoves s i [4,5] 
+    (if (cannonNotOOB i x) && (playerIsPartOfHoriRightCannon s i) && (targetFieldFree s x)
+        then (formatOneMove i x) : playerCannonMoves s i [4,5] 
         else [])
 
 playerCannonHoriLeftMoves :: String -> Int -> [String]
 playerCannonHoriLeftMoves s i = let x = (playerMovement (s!!i) i) 3 in 
-    (if (x >= 0 && x < 100) && (playerIsPartOfHoriLeftCannon s i) && (targetFieldFree s x) && (cannonNotOOB i x)
-        then (formatMove i x) : playerCannonMoves s i [-4,-5] 
+    (if (cannonNotOOB i x) && (playerIsPartOfHoriLeftCannon s i) && (targetFieldFree s x)
+        then (formatOneMove i x) : playerCannonMoves s i [-4,-5] 
         else [])
 
 playerCannonDiagFRightMoves :: String -> Int -> [String]
 playerCannonDiagFRightMoves s i = let x = (playerMovement (s!!i) i) 27 in 
-    (if (x >= 0 && x < 100) && (playerIsPartOfDiagFRightCannon s i) && (targetFieldFree s x) && (cannonNotOOB i x)
-        then (formatMove i x) : playerCannonMoves s i [36,45] 
+    (if (cannonNotOOB i x) && (playerIsPartOfDiagFRightCannon s i) && (targetFieldFree s x)
+        then (formatOneMove i x) : playerCannonMoves s i [36,45] 
         else [])
 
 playerCannonDiagFLeftMoves :: String -> Int -> [String]
 playerCannonDiagFLeftMoves s i = let x = (playerMovement (s!!i) i) 33 in 
-    (if (x >= 0 && x < 100) && (playerIsPartOfDiagFLeftCannon s i) && (targetFieldFree s x) && (cannonNotOOB i x)
-        then (formatMove i x) : playerCannonMoves s i [44,55] 
+    (if (cannonNotOOB i x) && (playerIsPartOfDiagFLeftCannon s i) && (targetFieldFree s x)
+        then (formatOneMove i x) : playerCannonMoves s i [44,55] 
         else [])
 
 playerCannonDiagBRightMoves :: String -> Int -> [String]
 playerCannonDiagBRightMoves s i = let x = (playerMovement (s!!i) i) (-33) in 
-    (if (x >= 0 && x < 100) && (playerIsPartOfDiagBRightCannon s i) && (targetFieldFree s x) && (cannonNotOOB i x)
-        then (formatMove i x) : playerCannonMoves s i [-36,-45] 
+    (if (cannonNotOOB i x) && (playerIsPartOfDiagBRightCannon s i) && (targetFieldFree s x)
+        then (formatOneMove i x) : playerCannonMoves s i [-36,-45] 
         else [])
 
 playerCannonDiagBLeftMoves :: String -> Int -> [String]
 playerCannonDiagBLeftMoves s i = let x = (playerMovement (s!!i) i) (-27) in 
-    (if (x >= 0 && x < 100) && (playerIsPartOfDiagBLeftCannon s i) && (targetFieldFree s x) && (cannonNotOOB i x)
-        then (formatMove i x) : playerCannonMoves s i [-44,-55] 
+    (if (cannonNotOOB i x) && (playerIsPartOfDiagBLeftCannon s i) && (targetFieldFree s x)
+        then (formatOneMove i x) : playerCannonMoves s i [-44,-55] 
         else [])
 
 playerCannons :: String -> Int -> String
@@ -328,17 +328,17 @@ playerCannons s i = let fs = (fieldString s) in stringsToListString (
 
 -- List Moves a Player can make
 playerCanMakeMoves :: String -> Int -> [String]
-playerCanMakeMoves s i = (playerCannons s i) : (map(\t -> (formatMove i t)) (fieldsPlayerCanMoveTo (fieldString s) i))
+playerCanMakeMoves s i = (playerCannons s i) : (map(\t -> (formatOneMove i t)) (fieldsPlayerCanMoveTo (fieldString s) i))
 
 printMoves :: String -> [String]
 printMoves s = filter (\m -> m /= "") (concat (map (splitOn ",") (if (baseMissing s) then (setBase s) else (map (\a -> (stringsToListString (playerCanMakeMoves s a))) (allies s)))))
 
+getMove a
+    | l >= 7 = s!!7
+    | l >= 1 = s!!1
+    | otherwise =  ""
+    where 
+        s = printMoves a
+        l = length s
 
-
--- Input Format: 4W5/1w1w1w1w1w/1w1w1w1w1w/1w1w1w1w1w///b1b1b1b1b1/b1b1b1b1b1/b1b1b1b1b1/7B2 w
--- Output Format: a0-b0
-getMove a = (printMoves a)!!7
-
--- Input Format: 4W5/1w1w1w1w1w/1w1w1w1w1w/1w1w1w1w1w///b1b1b1b1b1/b1b1b1b1b1/b1b1b1b1b1/7B2 w
--- Output Format: [a0-b0,a0-b0]
 listMoves s = outFormat (printMoves s)
